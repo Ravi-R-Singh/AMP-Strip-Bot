@@ -10,6 +10,10 @@
   "license": "ISC",
   "dependencies": {
     "discord.io": "https://github.com/woor/discord.io/tarball/gateway_v6",
+    "linkifyjs": "^2.1.9",
     "winston": "^3.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.2"
   }
 }

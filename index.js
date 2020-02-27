@@ -1,12 +1,12 @@
 const Discord = require('discord.io');
 const auth = require('./config.json');
 const winston = require('winston');
+const linkify = require('linkifyjs')
 
 // Configure logger settings
 const logger = winston.createLogger({
     level: 'info',
     format: winston.format.colorize(),
-    defaultMeta: { service: 'user-service' },
     transports: [
       //
       // - Write to all logs with level `info` and below to `combined.log`
@@ -40,22 +40,17 @@ bot.on('ready', function (evt) {
 });
 
 bot.on('message', function (user, userID, channelID, message, evt) {
-    // Our bot needs to know if it will execute a command
-    // It will listen for messages that will start with `!`
-    if (message.substring(0, 1) == '!') {
-        var args = message.substring(1).split(' ');
-        var cmd = args[0];
+    let containsUrl = false;
+    let urlArray = linkify.find(message);
 
-        args = args.splice(1);
-        switch(cmd) {
-            // !ping
-            case 'ping':
-                bot.sendMessage({
-                    to: channelID,
-                    message: 'Pong!'
-                });
-            break;
-            // Just add any case commands if you want to..
-         }
-     }
+    for (const item of urlArray) {
+      if (item['type'] === 'url') {
+        containsUrl = true;
+        break;
+      }
+    }
+
+    if (containsUrl) {
+      logger.info('Message contains a URL');
+    }
 });
