@@ -27,6 +27,15 @@ const logger = winston.createLogger({
     }));
   }
 
+function checkForUrls(msg) {
+  let urlArray = linkify.find(msg);
+  for (const item of urlArray) {
+    if (item['type'] === 'url')
+      return true;
+  }
+  return false;
+}
+
 // Initialize Discord Bot
 const bot = new Discord.Client({
    token: auth.token,
@@ -40,17 +49,13 @@ bot.on('ready', function (evt) {
 });
 
 bot.on('message', function (user, userID, channelID, message, evt) {
-    let containsUrl = false;
-    let urlArray = linkify.find(message);
-
-    for (const item of urlArray) {
-      if (item['type'] === 'url') {
-        containsUrl = true;
-        break;
-      }
-    }
+    let containsUrl = checkForUrls(message);
 
     if (containsUrl) {
       logger.info('Message contains a URL');
+      bot.sendMessage({
+        to: channelID,
+        message: 'Message contains a URL'
+      });
     }
 });
