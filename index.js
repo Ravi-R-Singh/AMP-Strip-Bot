@@ -1,12 +1,15 @@
-const Discord = require("discord.io");
+const Discord = require("discord.js");
+const client = new Discord.Client();
 const auth = require("./config.json");
 const winston = require("winston");
 const linkify = require("linkifyjs");
+const cheerio = require("cheerio");
+const axios = require("axios");
 
 // Configure logger settings
 const logger = winston.createLogger({
   level: "info",
-  format: winston.format.colorize(),
+  format: winston.format.prettyPrint(),
   transports: [
     //
     // - Write to all logs with level `info` and below to `combined.log`
@@ -55,43 +58,52 @@ function isAmpUrl(url) {
   return false;
 }
 
-function countAmpUrls(urlArray) {
-  let count = 0;
-  for (url of urlArray) {
-    if (isAmpUrl(url["href"])) count++;
-  }
-  return count;
+// gets canonical url from amp url
+function getSrcUrl(url) {
+  return axios
+    .get(url)
+    .then(function(res) {
+      // handle success
+      $ = cheerio.load(res["data"]);
+      return $("link[rel=canonical]").attr("href");
+    })
+    .catch(function(error) {
+      // handle error
+      logger.error("Error in getSrcUrl: " + error);
+    })
+    .finally(function() {
+      // always executed
+      logger.info("finished executing getSrcUrl");
+    });
 }
 
 // Initialize Discord Bot
-const bot = new Discord.Client({
-  token: auth.token,
-  autorun: true
-});
-
-bot.on("ready", function(evt) {
+client.once("ready", () => {
   logger.info("Connected");
   logger.info("Logged in as: ");
-  logger.info(bot.username + " - (" + bot.id + ")");
+  logger.info(client.user.username + " - (" + client.user.id + ")");
 });
 
-bot.on("message", function(user, userID, channelID, message, evt) {
-  const urlArray = linkify.find(message).filter(item => item["type"] === "url");
+client.login(auth.token);
+
+client.on("message", message => {
+  if (client.user.id === message.author.id) return;
+  const urlArray = linkify.find(message.content).filter(item => item["type"] === "url");
   const containsUrl = checkForUrls(urlArray);
 
   if (containsUrl) {
-    let numAmpUrls = countAmpUrls(urlArray);
+    const ampUrlArray = urlArray
+      .filter(urlObj => isAmpUrl(urlObj["href"]))
+      .map(urlObj => urlObj["href"]);
+
     logger.info("Message contains URL(s)");
     logger.info(
-      `${numAmpUrls} out of ${urlArray.length} URL(s) are AMP URL(s)`
+      `${ampUrlArray.length} out of ${urlArray.length} URL(s) are AMP URL(s)`
     );
 
-    bot.sendMessage({
-      to: channelID,
-      message: [
-        "Message contains URL(s)",
-        ` ${numAmpUrls} out of ${urlArray.length} URL(s) are AMP URL(s)`
-      ]
+    let srcUrlArray = ampUrlArray.map(ampUrl => getSrcUrl(ampUrl));
+    Promise.all(srcUrlArray).then(function(results) {
+      message.channel.send(results);
     });
   }
 });
