@@ -11,7 +11,7 @@
   "dependencies": {
     "axios": "^0.19.2",
     "cheerio": "^1.0.0-rc.3",
-    "discord.io": "https://github.com/woor/discord.io/tarball/gateway_v6",
+    "discord.js": "^11.6.1",
     "linkifyjs": "^2.1.9",
     "winston": "^3.2.1"
   },
