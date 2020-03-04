@@ -88,7 +88,9 @@ client.login(auth.token);
 
 client.on("message", message => {
   if (client.user.id === message.author.id) return;
-  const urlArray = linkify.find(message.content).filter(item => item["type"] === "url");
+  const urlArray = linkify
+    .find(message.content)
+    .filter(item => item["type"] === "url");
   const containsUrl = checkForUrls(urlArray);
 
   if (containsUrl) {
@@ -103,6 +105,24 @@ client.on("message", message => {
 
     let srcUrlArray = ampUrlArray.map(ampUrl => getSrcUrl(ampUrl));
     Promise.all(srcUrlArray).then(function(results) {
+      message.channel.send({
+        embed: {
+          fields: [
+            {
+              name: "Amp Links",
+              value:
+                "It looks like you've referenced one or more AMP links. Though these links load faster\
+                they threaten your [privacy](https://support.google.com/websearch/answer/7220196) -\
+                *\"When you use the Google AMP Viewer, Google and the publisher that made the AMP page may each collect data about you,*\"\
+                - and the [open web](https://www.socpub.com/articles/chris-graham-why-google-amp-threat-open-web-15847)."
+            }
+          ],
+          timestamp: new Date()
+        }
+      });
+
+      results = results.map((data, index) => `[${index + 1}] ${data}`);
+      results.unshift("I've found the original pages for you: ")
       message.channel.send(results);
     });
   }
