@@ -9,7 +9,7 @@
   "author": "Ravi Singh",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "cheerio": "^1.0.0-rc.3",
     "discord.js": "^11.6.1",
     "linkifyjs": "^2.1.9",
